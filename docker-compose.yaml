@@ -28,8 +28,8 @@ services:
   openemr:
     image: openemr/openemr:5.0.2
     ports:
-    - 8000-8005:8000 # se pone un rango por que haremos replica 
-    - 8090-8095:443
+    - 8000:80
+    - 8090:443
     volumes:
     - websitevolume:/var/www/localhost/htdocs/openemr/sites
     - sslvolume:/etc/ssl
@@ -48,7 +48,7 @@ services:
     networks:
     - net01
     deploy:
-      replicas: 3 # No pueden sobrepasar el rango de ports 
+      replicas: 1 # No pueden sobrepasar el rango de ports 
 
 volumes:
   websitevolume: 
