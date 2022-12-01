@@ -1,0 +1,74 @@
+version: '3.1'
+networks:
+  net01:          
+services:
+  redis:
+    image: redis
+    deploy:
+      replicas: 1
+    networks:
+    - net01
+  mariadb:
+    image: mariadb:10.4.8-bionic
+    restart: always
+    ports:
+            - '${FORWARD_DB_PORT:-3306}:3306'
+    command: ['mysqld','--character-set-server=utf8']
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: openemr
+      MYSQL_PASS: openemr
+    volumes:
+      - mariadb_data:/var/lib/mysql/
+    deploy:
+      replicas: 1
+    networks:
+    - net01
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=mariadb
+    volumes:
+      - phpmyadmin_data:/var/www/html/
+    networks:
+      - net01
+    ports:
+      - "8000:80"
+    links: 
+      - mariadb
+    depends_on:
+      - mariadb
+    
+  openemr:
+    image: openemr/openemr:5.0.2
+    ports:
+    - 8080:80
+    - 8090:443
+    volumes:
+    - websitevolume:/var/www/localhost/htdocs/openemr/sites
+    - sslvolume:/etc/ssl
+    - letsencryptvolume:/etc/letsencrypt
+    environment:
+      SWARM_MODE: "yes"
+      REDIS_SERVER: redis
+      MYSQL_HOST: mariadb
+      MYSQL_ROOT_PASS: root
+      MYSQL_USER: openemr
+      MYSQL_PASS: openemr
+      OE_USER: admin
+      OE_PASS: pass
+    depends_on:
+    - mariadb
+    networks:
+    - net01
+    deploy:
+      replicas: 1
+
+
+volumes:
+  websitevolume: 
+  sslvolume: 
+  letsencryptvolume: 
+  mariadb_data:
+  phpmyadmin_data:
